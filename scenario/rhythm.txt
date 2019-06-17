@@ -1,0 +1,16 @@
+1 takeoff
+delay 1
+
+2 takeoff
+delay 1
+
+3 takeoff
+delay 1
+
+4 takeoff
+delay 1
+
+5 takeoff
+delay 5
+
+* land

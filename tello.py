@@ -5,9 +5,10 @@ import tkinter as tk
 import textbox
 
 bool_recv = True
+cmd_count = 0
 
 def recv():
-    global bool_recv
+    global bool_recv, cmd_count
     while True:
         while bool_recv:
             try:
@@ -15,15 +16,26 @@ def recv():
                 data, server = conn_sock.recvfrom(1024)
                 conn_sock.settimeout(None)
                 textbox.set_log(str(server[0]) + " : " + data.decode(encoding="utf-8"))
+                tello_command[server] = ''
+                cmd_count -= 1
+                print(cmd_count)
             except socket.timeout:
-                pass
+                print(cmd_count)
+                if cmd_count > 0:
+                    for key, val in tello_command.items():
+                        if val != '':
+                            conn_sock.sendto(val.encode(encoding="utf-8"), key)
+                            print(key, val)
+                    cmd_count = 0
+                else:
+                    pass            
             except Exception:
                 textbox.set_log('Recv Error')
         time.sleep(1)
 
             
 def recv_conn():
-    global bool_recv
+    global bool_recv, cmd_count
     bool_recv = False
     tello_address.clear()
     while True:
@@ -35,12 +47,14 @@ def recv_conn():
             if(data.decode(encoding="utf-8") == 'ok'):
                 print(server)
                 tello_address.append(tuple(server))
+                tello_command = {tuple(server):''}
         except socket.timeout:
             textbox.set_log('End Scanning !')
             break
         except Exception:
             textbox.set_log('Recv Error')
             break
+    cmd_count = 0
     bool_recv = True
 
 
@@ -75,9 +89,13 @@ def get_list(listbox):
 
 
 def sendto(msg):
+    global cmd_count
     textbox.set_log(msg)
     for addr in tello_address:
         conn_sock.sendto(msg.encode(encoding="utf-8"), addr)
+        tello_command[addr] = msg
+        cmd_count += 1
+        print(cmd_count)
         print('send ' + msg + ' to ' + str(addr))
 
 
@@ -151,18 +169,27 @@ def flip_r(e = None):
     sendto(msg)
 
 
+def get_sock():
+    return conn_sock
+
+
+def get_addr_list():
+    return tello_address
+
 
 tello_address = []
-
+tello_command = {}
 
 test_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 test_sock.connect(("192.168.0.0", 80))
 localhost = test_sock.getsockname()[0]
 print('localhost :',localhost)
 test_sock.close()
-
+    
 conn_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 conn_sock.bind(('',9000))
+print('create conn_sock')
 
 recvThread = threading.Thread(target=recv)
 recvThread.start()
+print('recv thread start')
