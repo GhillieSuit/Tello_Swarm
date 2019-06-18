@@ -12,32 +12,34 @@ def recv():
     while True:
         while bool_recv:
             try:
-                conn_sock.settimeout(1)
+                conn_sock.settimeout(5)
                 data, server = conn_sock.recvfrom(1024)
                 conn_sock.settimeout(None)
                 textbox.set_log(str(server[0]) + " : " + data.decode(encoding="utf-8"))
-                tello_command[server] = ''
-                cmd_count -= 1
-                print(cmd_count)
-            except socket.timeout:
-                print(cmd_count)
-                if cmd_count > 0:
-                    for key, val in tello_command.items():
-                        if val != '':
-                            conn_sock.sendto(val.encode(encoding="utf-8"), key)
-                            print(key, val)
-                    cmd_count = 0
+                if data == 'error' or data == 'error Not joystick':
+                    conn_sock.sendto(tello_command[server].encode(encoding="utf-8"), server)
+                    textbox.set_log('Resend to '  + str(server[0]) + ' : ' + str(tello_command[server]))
                 else:
-                    pass            
+                    tello_command[server] = ''
+                    cmd_count -= 1
+                    print(cmd_count)
+            except socket.timeout:
+                print('timeout')
+                for key, var in tello_command.items():
+                    if var != '':
+                        conn_sock.sendto(var.encode(encoding="utf-8"), key)
+                        textbox.set_log('Resend to ' + key[0] + ' : ' + var)
+                cmd_count = 0           
             except Exception:
                 textbox.set_log('Recv Error')
         time.sleep(1)
 
-            
+      
 def recv_conn():
     global bool_recv, cmd_count
     bool_recv = False
     tello_address.clear()
+    tello_command = {}
     while True:
         try:
             conn_sock.settimeout(5)
@@ -93,8 +95,6 @@ def sendto(msg):
     textbox.set_log(msg)
     for addr in tello_address:
         conn_sock.sendto(msg.encode(encoding="utf-8"), addr)
-        tello_command[addr] = msg
-        cmd_count += 1
         print(cmd_count)
         print('send ' + msg + ' to ' + str(addr))
 

@@ -1,10 +1,13 @@
 * takeoff
-delay 5
+delay 10
+
+* up 100
+delay 6
 
 2 forward 50
 3 forward 100
 4 forward 50
-delay 5
+delay 6
 
 * forward 500
 delay 10
@@ -15,16 +18,16 @@ delay 5
 1 back 100
 3 forward 100
 5 back 100
-delay 5
+delay 10
 
-* forward 500
+* forward 400
 delay 10
 
 1 forward 100
 3 forward 50
 4 forward 50
 5 forward 100
-delay 5
+delay 6
 
 * cw 180
 delay 5
